@@ -1,0 +1,9 @@
+{
+    "name": "NODownloadEr",
+    "version": "0.0.1",
+    "dependencies" : {
+        "lodash" : "2.x",
+        "mail-notifier": "0.x",
+        "request": "2.x"
+    }
+}

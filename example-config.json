@@ -1,0 +1,13 @@
+{
+	"utorrent" : {
+        "username": "your_utorrent_username",
+        "password": "your_utorrent_password",
+        "port": 8080
+	},
+    "imap" : {
+        "emailAddress": "your_dedicated_mail_account_for_this_app@mail.com",
+        "password": "your_password",
+        "host": "imap.host.com",
+        "port": 993
+    }
+}
