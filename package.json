@@ -4,6 +4,8 @@
     "dependencies" : {
         "lodash" : "2.x",
         "mail-notifier": "0.x",
-        "request": "2.x"
+        "request": "2.x",
+        "emailjs": "0.x",
+        "q" : "1.x"
     }
 }

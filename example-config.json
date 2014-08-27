@@ -5,9 +5,18 @@
         "port": 8080
 	},
     "imap" : {
-        "emailAddress": "your_dedicated_mail_account_for_this_app@mail.com",
+        "emailAddress": "your_dedicated_mail_account_for_this_app@host.com",
         "password": "your_password",
         "host": "imap.host.com",
         "port": 993
-    }
+    },
+    "smtp" : {
+        "emailAddress": "your_dedicated_mail_account_for_this_app@host.com",
+        "password": "your_password",
+        "host": "smtp.host.com"
+    },
+    "allowedDownloaders" : [
+        "some_email@host.com",
+        "some_other_email@host.com"
+    ]
 }
