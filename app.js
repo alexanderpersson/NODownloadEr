@@ -40,8 +40,9 @@ function onMail(mail) {
             returnStatus(mailData)
         }
         else {
-            var rowIndex = mail.text.indexOf("\n")
-            mailData.link = mail.text.substr(0, rowIndex)
+            var trimmed = mail.text.trim()
+            var rowIndex = trimmed.indexOf("\n")
+            mailData.link = rowIndex === -1 ? trimmed : trimmed.substr(0, rowIndex)
             addTorrent(mailData)
         }
     }
