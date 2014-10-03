@@ -5,10 +5,10 @@
 var request     = require('request'),
     Notifier    = require('mail-notifier'),
     _           = require('lodash'),
-    zlib        = require('zlib'),
     config      = require('./config'),
     email       = require('emailjs'),
     q           = require('q'),
+    util        = require('util')
     downloads   = []
 
 var emailServer = email.server.connect({
@@ -30,46 +30,55 @@ var mailNotifier = Notifier({
 mailNotifier.on('mail', onMail)
 
 function onMail(mail) {
+    util.log('Got mail from ' + mail.from[0].address + ' with subject ' + mail.subject)
     var from = mail.from[0].address
     if (_.contains(config.allowedDownloaders, from.toLowerCase())) {
+        util.log('Address is allowed')
         var mailData = {
             from: mail.from[0].address,
             subject: mail.subject
         }
         if (mail.subject.toLowerCase() == 'status') {
+            util.log('Mail is only status message')
             returnStatus(mailData)
         }
         else {
+            util.log('Parsing email for link')
             var trimmed = mail.text.trim()
             var rowIndex = trimmed.indexOf("\n")
             mailData.link = rowIndex === -1 ? trimmed : trimmed.substr(0, rowIndex)
+            util.log('Got link ' + mailData.link)
             addTorrent(mailData)
         }
     }
     else {
+        util.log('Address is not allowed')
         sendMail(from, 're: ' + mail.subject, 'Your email is not in the list of allowed downloaders.')
     }
 }
 
 function sendMail(recipient, subject, text) {
+    util.log('Sending email')
     emailServer.send({
         text: text,
         from: config.smtp.emailAddress,
         to: recipient,
         subject: subject
-    })
+    }, function(err, message) { util.log(err || 'Sent email'); })
 }
 
 function returnStatus(mailData) {
+    util.log('Getting status')
     getTorrents().then(function(data) {
         var text = createStatusResponse(data)
+        util.log('Got status ' + text)
         sendMail(mailData.from, 're: ' + mailData.subject, text)
     }, asyncError)
 }
 
 function asyncError(error) {
     //TODO: do something meaningful
-    console.log(error)
+    util.log(error)
 }
 
 function createStatusResponse(data) {
@@ -86,15 +95,18 @@ function createUtorentAddress(param) {
 
 var listLink = createUtorentAddress("list=1")
 function getTorrents() {
+    util.log('Getting torrents')
     var deferred = q.defer()
     request(listLink, function(error, response, body) {
         if (!error && response.statusCode === 200) {
+            util.log('Got torrents')
             var data = _.map(JSON.parse(body).torrents, function (torrent) {
                 return { hash: torrent[0], status: torrent[1], name: torrent[2], percentage: torrent[4] }
             })
             deferred.resolve(data)
         }
         else {
+            util.log(error)
             deferred.reject(error)
         }
     })
@@ -108,6 +120,7 @@ function addTorrent(mailData) {
             addTorrentToUtorrent(magnet).then(
                 getTorrents, asyncError).then(function (after) {
                     var diff = getDifference(before, after)
+                    util.log('Got new torrent ' + diff)
                     saveHash(diff, mailData)
                     sendMail(mailData.from, 're: ' + mailData.subject, 'Download started')
             }, asyncError)
@@ -116,37 +129,36 @@ function addTorrent(mailData) {
 }
 
 function saveHash(hash, mailData) {
+    util.log('Saves hasg')
     downloads.push( {hash: hash, mailData: mailData })
 }
 
 function getDifference(before, after) {
+    util.log('Looking for differences')
     var beforeHashes = _.pluck(before, 'hash')
     var afterHashes = _.pluck(after, 'hash')
     var difference = _.difference(afterHashes, beforeHashes)
     if (difference.length > 0) {
+        util.log('Found a difference')
         return difference[0]
     }
     else {
+        util.log('Found nothing')
         return null
     }
 }
 
 function parseMagnet(url) {
+    util.log('Parsing html for magnet')
     var deferred = q.defer()
     request(url, { encoding: null }, function(error, response, body) {
         if (!error && response.statusCode === 200) {
-            zlib.gunzip(body, function(error, dezipped) {
-                if (!error) {
-                    var data = dezipped.toString()
-                    var magnet = parseMagnetFromHtml(data)
-                    deferred.resolve(magnet)
-                }
-                else {
-                    deferred.reject(error)
-                }
-            })
+            var magnet = parseMagnetFromHtml(body.toString())
+            util.log('Found magnet ' + magnet)
+            deferred.resolve(magnet)
         }
         else {
+            util.log(error)
             deferred.reject(error)
         }
     })
@@ -161,13 +173,16 @@ function parseMagnetFromHtml(html) {
 }
 
 function addTorrentToUtorrent(magnet) {
+    util.log('Adding torrent')
     var deferred = q.defer()
     var url = createUtorentAddress("action=add-url&s=" + magnet)
     request(url, function(error, response, body) {
         if (!error && response.statusCode === 200) {
+            util.log('Torrent added')
             deferred.resolve(true)
         }
         else {
+            util.log(error)
             deferred.reject(error)
         }
     })
@@ -181,12 +196,17 @@ function pauseTorrents() {
 function doPauseTorrents(data) {
     _.each(data, function(torrent) {
         if (torrent.percentage === 1000 && torrent.status !== 233) {
+            util.log('Pausing torrent ' + torrent.hash)
             var url = createUtorentAddress("action=pause&hash=" + torrent.hash)
             request(url, function(error, resposne, body) {
                 var entry = _.first(downloads, { hash: torrent.hash })
                 if (entry[0] != null) {
+                    util.log('Paused torrent ' + entry[0].mailData.subject)
                     sendMail(entry[0].mailData.from, 're: ' + entry[0].mailData.subject, 'Download finished')
                     _.remove(downloads, function(item) { return item.hash === entry[0].hash })
+                }
+                else {
+                    util.log('Paused torrent but none cared')
                 }
             })
         }
@@ -195,3 +215,4 @@ function doPauseTorrents(data) {
 
 setInterval(pauseTorrents, 10000)
 mailNotifier.start()
+util.log('Started')
