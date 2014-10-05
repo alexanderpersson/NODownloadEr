@@ -95,11 +95,9 @@ function createUtorentAddress(param) {
 
 var listLink = createUtorentAddress("list=1")
 function getTorrents() {
-    util.log('Getting torrents')
     var deferred = q.defer()
     request(listLink, function(error, response, body) {
         if (!error && response.statusCode === 200) {
-            util.log('Got torrents')
             var data = _.map(JSON.parse(body).torrents, function (torrent) {
                 return { hash: torrent[0], status: torrent[1], name: torrent[2], percentage: torrent[4] }
             })
@@ -129,7 +127,7 @@ function addTorrent(mailData) {
 }
 
 function saveHash(hash, mailData) {
-    util.log('Saves hasg')
+    util.log('Saves hash')
     downloads.push( {hash: hash, mailData: mailData })
 }
 
