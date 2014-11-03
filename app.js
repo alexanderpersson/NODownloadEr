@@ -28,6 +28,10 @@ var mailNotifier = Notifier({
 })
 
 mailNotifier.on('mail', onMail)
+mailNotifier.on('end', function() {
+    mailNotifier.start()
+    util.log('Restarted')
+})
 
 function onMail(mail) {
     util.log('Got mail from ' + mail.from[0].address + ' with subject ' + mail.subject)
@@ -193,7 +197,7 @@ function pauseTorrents() {
 
 function doPauseTorrents(data) {
     _.each(data, function(torrent) {
-        if (torrent.percentage === 1000 && torrent.status !== 233) {
+        if (torrent.percentage === 1000 && !(torrent.status === 233 || torrent.status === 161 || torrent.status === 232)) {
             util.log('Pausing torrent ' + torrent.hash)
             var url = createUtorentAddress("action=pause&hash=" + torrent.hash)
             request(url, function(error, resposne, body) {

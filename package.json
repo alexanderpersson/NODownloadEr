@@ -1,11 +1,21 @@
 {
     "name": "NODownloadEr",
+    "description": "Small app that listens on a imap for piratebay links",
+    "author": {
+        "name": "Alexander Persson",
+        "url": "https://www.linkedin.com/in/alexanderpersson",
+        "email": "alexander.f.persson@gmail.com"
+    },
+    "repository": {
+        "type": "git",
+        "url": ""
+    }
     "version": "0.0.1",
     "dependencies" : {
-        "lodash" : "2.x",
-        "mail-notifier": "0.x",
-        "request": "2.x",
-        "emailjs": "0.x",
-        "q" : "1.x"
+        "lodash" : "2.4.1",
+        "mail-notifier": "0.2.3",
+        "request": "2.40.0",
+        "emailjs": "0.3.11",
+        "q" : "1.0.1"
     }
 }
