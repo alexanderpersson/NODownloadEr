@@ -8,8 +8,8 @@
     },
     "repository": {
         "type": "git",
-        "url": ""
-    }
+        "url": "https://github.com/alexanderpersson/NODownloadEr"
+    },
     "version": "0.0.1",
     "dependencies" : {
         "lodash" : "2.4.1",
