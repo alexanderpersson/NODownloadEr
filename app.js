@@ -8,8 +8,9 @@ var request     = require('request'),
     config      = require('./config'),
     email       = require('emailjs'),
     q           = require('q'),
-    util        = require('util')
-    downloads   = []
+    util        = require('util'),
+    downloads   = [],
+	mailNotifier = null
 
 var emailServer = email.server.connect({
     user: config.smtp.emailAddress,
@@ -18,20 +19,25 @@ var emailServer = email.server.connect({
     ssl: true
 })
 
-var mailNotifier = Notifier({
-    user: config.imap.emailAddress,
-    password: config.imap.password,
-    host: config.imap.host,
-    port: config.imap.port,
-    tls: true,
-    tlsOptions: { rejectUnauthorized: false }
-})
+function initializeNotifier() {
+	mailNotifier = Notifier({
+		user: config.imap.emailAddress,
+		password: config.imap.password,
+		host: config.imap.host,
+		port: config.imap.port,
+		tls: true,
+		tlsOptions: { rejectUnauthorized: false }
+	})	
 
-mailNotifier.on('mail', onMail)
-mailNotifier.on('end', function() {
-    mailNotifier.start()
-    util.log('Restarted')
-})
+	mailNotifier.on('mail', onMail)
+	mailNotifier.on('end', function() {
+		mailNotifier = null
+		delete mailNotifier
+		initializeNOtifier()
+		mailNotifier.start()
+		util.log('Restarted')
+	})
+}
 
 function onMail(mail) {
     util.log('Got mail from ' + mail.from[0].address + ' with subject ' + mail.subject)
@@ -216,5 +222,6 @@ function doPauseTorrents(data) {
 }
 
 setInterval(pauseTorrents, 10000)
+initializeNotifier()
 mailNotifier.start()
 util.log('Started')
